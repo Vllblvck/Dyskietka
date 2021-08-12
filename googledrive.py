@@ -1,5 +1,7 @@
-import config
+#!/usr/bin/python
+
 from datetime import datetime
+from os import pardir
 from pathlib import Path
 
 from google.auth.transport.requests import Request
@@ -9,55 +11,40 @@ from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
 
 
-def authorize() -> Resource:
+def authorize(token_path, credentials_path, scopes) -> Resource:
     creds = None
 
-    if Path(config.TOKEN).exists():
-        creds = Credentials.from_authorized_user_file(
-            config.TOKEN, ['https://www.googleapis.com/auth/drive.file'])
+    if Path(token_path).exists():
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                config.CREDENTIALS, ['https://www.googleapis.com/auth/drive.file'])
+                credentials_path, scopes)
             creds = flow.run_local_server(port=0)
 
-        with open(config.TOKEN, 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
 
     return build('drive', 'v3', credentials=creds)
 
 
-#TODO check if directory matches 
-def get_files_by_name(drive_service: Resource, file_name: str) -> list:
-    ''' 
-        Returns all the files located on google drive that match the file_name.
-        Rejects trashed files.
-
-        Parameters: 
-            drive_service (Resource): a class for interacting with a google drive API
-            file_name (str): Self explanatory
-
-        Returns:
-            files (list): list containing files metadata
-    '''
-
+def get_files_by_name(drive_service, file_name, directory):
     files = []
     page_token = None
 
     while True:
         response = drive_service.files().list(
-            q=f"name='{file_name}'",
+            q=f"name='{file_name}' and trashed=false and '{directory}' in parents",
             spaces='drive',
-            fields='nextPageToken, files(id, modifiedTime, trashed)',
+            fields='nextPageToken, files(id, modifiedTime)',
             pageToken=page_token
         ).execute()
 
         for file in response.get('files', []):
-            if not file.get('trashed'):
-                files.append(file)
+            files.append(file)
 
         page_token = response.get('nextPageToken', None)
         if page_token is None:
@@ -66,18 +53,8 @@ def get_files_by_name(drive_service: Resource, file_name: str) -> list:
     return files
 
 
-def get_newest_file_id(drive_service: Resource, file_name: str) -> str:
-    ''' 
-        Returns id of newest file (modification time) with name file_name.
-
-        Parameters: 
-            drive_service (Resource): a class for interacting with a google drive API
-            file_name (str): Self explanatory
-
-        Returns:
-            id (str): id of a file in a string
-    '''
-    files = get_files_by_name(drive_service, file_name)
+def get_newest_file_id(drive_service, file_name, directory):
+    files = get_files_by_name(drive_service, file_name, directory)
     if not files:
         return None
 
