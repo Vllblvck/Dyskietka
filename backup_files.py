@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import config
 import googledrive as drive
 
@@ -5,40 +7,42 @@ from glob import glob
 from pathlib import Path
 
 
-def resolve_patterns(paths_patterns):
-    files = []
-    for pattern in paths_patterns:
-        resolved_paths = glob(pattern, recursive=True)
-        files += resolved_paths
+def upload_files(drive_service, paths, directory):
+    for path in paths:
+        #TODO Instead of skipping directories create their structure on google drive
+        if Path(path).is_dir():
+            continue
 
-    return files
+        print('Checking whether file exists on google drive...')
+        file_name = Path(path).name
+        file_id = drive.get_newest_file_id(drive_service, file_name, directory)
+        if not file_id:
+            print(f'Creating {file_name} on google drive...')
+            drive.create_file(drive_service, path,
+                              directory=directory)
+        else:
+            print(f'Updating {file_name} on google drive...')
+            drive.update_file(drive_service, path, file_id)
 
 
 def main():
-    if len(config.FILES) != len(config.DIRECTORIES):
-        print('SIZES OF FILES AND DIRECTORIES MUST BE THE SAME!!!')
-        return
-
     try:
         print('Authorizing...')
-        drive_service = drive.authorize()
+        drive_service = drive.authorize(
+            config.TOKEN,
+            config.CREDENTIALS,
+            config.SCOPES
+        )
 
-        #TODO fix index out of bounds
-        file_paths = resolve_patterns(config.FILES)
-        for idx, file_path in enumerate(file_paths):
-            directory = config.DIRECTORIES[idx]
-            file_name = Path(file_path).name
+        for backup in config.BACKUPS:
+            resolved_paths = glob(backup[0], recursive=True)
+            print(resolved_paths)
+            if not resolved_paths:
+                print(f'PATTERN \'{backup[0]}\' IS INVALID!!!')
+                continue
 
-            print('Checking whether file exists...')
-            file_id = drive.get_newest_file_id(drive_service, file_name)
-
-            if not file_id:
-                print('Creating file on google drive...')
-                drive.create_file(drive_service, file_path,
-                                  directory=directory)
-            else:
-                print('Updating file on google drive...')
-                drive.update_file(drive_service, file_path, file_id)
+            directory = backup[1]
+            upload_files(drive_service, resolved_paths, directory)
 
     except Exception as ex:
         print('EXCEPTION OCCURED WHILE UPLOADING FILES!')
