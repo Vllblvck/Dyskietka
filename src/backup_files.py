@@ -7,9 +7,16 @@ from glob import glob
 from pathlib import Path
 
 
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+
+AUTH_DIR = Path(__file__).parent / '..' / 'auth'
+CREDENTIALS = AUTH_DIR / 'credentials.json'
+TOKEN = AUTH_DIR / 'token.json'
+
+
 def upload_files(drive_service, paths, directory):
     for path in paths:
-        #TODO Instead of skipping directories create their structure on google drive
+        # TODO Instead of skipping directories create their structure on google drive
         if Path(path).is_dir():
             continue
 
@@ -28,21 +35,18 @@ def upload_files(drive_service, paths, directory):
 def main():
     try:
         print('Authorizing...')
-        drive_service = drive.authorize(
-            config.TOKEN,
-            config.CREDENTIALS,
-            config.SCOPES
-        )
+        drive_service = drive.authorize(TOKEN, CREDENTIALS, SCOPES)
 
         for backup in config.BACKUPS:
             resolved_paths = glob(backup[0], recursive=True)
-            print(resolved_paths)
             if not resolved_paths:
                 print(f'PATTERN \'{backup[0]}\' IS INVALID!!!')
                 continue
 
             directory = backup[1]
             upload_files(drive_service, resolved_paths, directory)
+
+        print('Done')
 
     except Exception as ex:
         print('EXCEPTION OCCURED WHILE UPLOADING FILES!')
