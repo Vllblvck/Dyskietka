@@ -1,5 +1,4 @@
 venv/
 .vscode/
+.idea/
 __pycache__/
-credentials.json
-token.json
