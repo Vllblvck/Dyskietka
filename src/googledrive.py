@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from datetime import datetime
-from os import pardir
 from pathlib import Path
 
 from google.auth.transport.requests import Request
