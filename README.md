@@ -8,6 +8,7 @@ Who likes to manually drag and drop files? I know I don't. That's why I spent ho
 ## TODOs (Might do some day)
 - Add code comments
 - Add support for uploading directories
+- Add option to skip already uploaded files/directories
 
 ## Requirements
 - Python and pip package management tool installed
