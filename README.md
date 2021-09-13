@@ -6,9 +6,7 @@ Dyskietka is a simple python utility for uploading files to google drive.
 Who likes to manually drag and drop files? I know I don't. That's why I spent hours on making this tool so I can automate the process of backing up my files on google drive :)  
 
 ## TODOs (Might do some day)
-- Add code comments
 - Add support for uploading directories
-- Add option to skip already uploaded files/directories
 
 ## Requirements
 - Python and pip package management tool installed
