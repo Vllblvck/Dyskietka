@@ -2,7 +2,7 @@
 
 Dyskietka is a simple python utility for uploading files to google drive.  
 
-**!IMPORTANT!**  
+**IMPORTANT!**  
 Recently I realized that there is a tool called **_'rclone'_** which does everything I wanted **_'dyskietka'_** to do and even more.  
 I suggest using rclone unless someday I improve my utility.  
 It will probably be thrown into the void called **_'Projects I started but never finished'_** though.
